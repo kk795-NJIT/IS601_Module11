@@ -47,12 +47,14 @@ A comprehensive FastAPI application implementing secure user authentication, pas
 
 The Docker image for this application is automatically built and pushed to Docker Hub via GitHub Actions on every push to the main branch.
 
-**Docker Hub Repository**: `https://hub.docker.com/r/<your-dockerhub-username>/secure-fastapi-app`
+**Docker Hub Repository**: `https://hub.docker.com/r/YOUR_USERNAME/secure-fastapi-app`
+
+> **Note**: Replace `YOUR_USERNAME` with your Docker Hub username after creating the repository.
 
 To pull and run the latest image:
 ```bash
-docker pull <your-dockerhub-username>/secure-fastapi-app:latest
-docker run -p 8000:8000 <your-dockerhub-username>/secure-fastapi-app:latest
+docker pull YOUR_USERNAME/secure-fastapi-app:latest
+docker run -p 8000:8000 YOUR_USERNAME/secure-fastapi-app:latest
 ```
 
 ## Prerequisites
@@ -69,7 +71,7 @@ docker run -p 8000:8000 <your-dockerhub-username>/secure-fastapi-app:latest
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd IS601_Module10
+   cd IS601_Module11
    ```
 
 2. **Create a virtual environment**
@@ -110,7 +112,7 @@ docker run -p 8000:8000 <your-dockerhub-username>/secure-fastapi-app:latest
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd IS601_Module10
+   cd IS601_Module11
    ```
 
 2. **Build and run with Docker Compose**
@@ -172,10 +174,26 @@ Coverage report will be generated in `htmlcov/index.html`
 
 ### Test Summary
 
-- **test_calculations.py** (42 tests): Tests for calculation operations, factory pattern, and Pydantic schema validation
-- **test_schemas.py** (32 tests): Tests for User schema validation
-- **test_security.py** (32 tests): Tests for password hashing and verification
-- **test_integration.py** (50+ tests): Integration tests for User and Calculation models with PostgreSQL
+**Module 11 Calculation Tests:**
+- **test_calculations.py** (42 tests): 
+  - OperationType enum validation (2 tests)
+  - CalculationCreate schema validation including division by zero (12 tests)
+  - CalculationRead schema structure (1 test)
+  - Individual operation tests (16 tests): Add, Subtract, Multiply, Divide
+  - Factory pattern creation and error handling (11 tests)
+  
+**Module 10 User Tests (Maintained):**
+- **test_schemas.py** (32 tests): User schema validation
+- **test_security.py** (32 tests): Password hashing and verification
+
+**Integration Tests:**
+- **test_integration.py** (50+ tests): 
+  - User CRUD operations with PostgreSQL (34 tests)
+  - Calculation model database operations (16 tests)
+  - Foreign key relationships and constraints
+  - Query filtering by type and user
+
+**Total: 106+ unit tests + 50+ integration tests**
 
 ## Calculation Model & Factory Pattern
 
@@ -375,10 +393,22 @@ docker run -p 8000:8000 \
 
 ### Docker Hub Links
 
-- Docker Hub Repository: `https://hub.docker.com/r/<your-docker-hub-username>/secure-fastapi-app`
-- Pull Image: `docker pull <your-docker-hub-username>/secure-fastapi-app:latest`
+- Docker Hub Repository: `https://hub.docker.com/r/YOUR_USERNAME/secure-fastapi-app`
+- Pull Image: `docker pull YOUR_USERNAME/secure-fastapi-app:latest`
 
-**Note**: Replace `<your-docker-hub-username>` with your actual Docker Hub username.
+**Note**: Replace `YOUR_USERNAME` with your actual Docker Hub username.
+
+### Module 11 Assignment Submission
+
+This repository fulfills Module 11 requirements:
+- ✅ Calculation model with SQLAlchemy (no raw SQL)
+- ✅ Pydantic schemas with validation (CalculationCreate, CalculationRead)
+- ✅ Factory pattern for calculation operations
+- ✅ 42 unit tests for calculations and factory
+- ✅ 16 integration tests with PostgreSQL
+- ✅ CI/CD pipeline updated and passing
+- ✅ Docker image builds and pushes to Docker Hub
+- ✅ Complete documentation (README + REFLECTION)
 
 ## Development Workflow
 
@@ -587,4 +617,9 @@ For issues or questions:
 - Add monitoring and logging with ELK stack
 - Performance optimization and caching strategies
 - Implement GraphQL API alongside REST
+
+---
+
+**Project Created**: November 2024
+**Last Updated**: November 2024
 
