@@ -52,6 +52,7 @@ jobs:
       run: |
         pytest tests/test_security.py -v
         pytest tests/test_schemas.py -v
+        pytest tests/test_calculations.py -v
     
     - name: Run integration tests
       env:

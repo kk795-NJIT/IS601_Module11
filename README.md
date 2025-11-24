@@ -1,14 +1,16 @@
-# Secure FastAPI User Management Application
+# Secure FastAPI User Management Application with Calculation Model
 
-A comprehensive FastAPI application implementing secure user authentication, password hashing, and database integration with SQLAlchemy and PostgreSQL. This project includes complete testing (unit and integration tests), Docker containerization, and CI/CD pipeline with GitHub Actions.
+A comprehensive FastAPI application implementing secure user authentication, password hashing, database integration with SQLAlchemy and PostgreSQL, and a calculation model with factory pattern. This project includes complete testing (unit and integration tests), Docker containerization, and CI/CD pipeline with GitHub Actions.
 
 ## Features
 
 - **Secure User Authentication**: Password hashing using bcrypt with configurable cost factors
-- **SQLAlchemy ORM**: Database models with UUID primary keys and unique constraints
-- **Pydantic Validation**: Request/response schemas with comprehensive validation
+- **Calculation Model**: SQLAlchemy model for storing arithmetic operations (Add, Subtract, Multiply, Divide)
+- **Factory Pattern**: Design pattern implementation for creating calculation operations dynamically
+- **SQLAlchemy ORM**: Database models with UUID primary keys, foreign keys, and unique constraints
+- **Pydantic Validation**: Request/response schemas with comprehensive validation including division by zero checks
 - **RESTful API**: Full CRUD operations for user management
-- **Comprehensive Testing**: Unit tests, integration tests with real database
+- **Comprehensive Testing**: Unit tests for calculations and factory pattern, integration tests with real PostgreSQL database
 - **Docker Support**: Multi-stage Dockerfile and Docker Compose for local development
 - **CI/CD Pipeline**: GitHub Actions workflow for automated testing and Docker Hub deployment
 - **FastAPI Documentation**: Automatic OpenAPI/Swagger documentation
@@ -20,23 +22,37 @@ A comprehensive FastAPI application implementing secure user authentication, pas
 ├── app/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI application and endpoints
-│   ├── models.py            # SQLAlchemy User model
+│   ├── models.py            # SQLAlchemy models (User, Calculation)
 │   ├── schemas.py           # Pydantic validation schemas
+│   ├── factory.py           # Factory pattern for calculations
 │   ├── database.py          # Database configuration
 │   └── security.py          # Password hashing utilities
 ├── tests/
 │   ├── __init__.py
-│   ├── test_security.py     # Unit tests for hashing
-│   ├── test_schemas.py      # Unit tests for validation
-│   └── test_integration.py  # Integration tests with database
+│   ├── test_security.py     # Unit tests for password hashing
+│   ├── test_schemas.py      # Unit tests for schema validation
+│   ├── test_calculations.py # Unit tests for calculations and factory
+│   └── test_integration.py  # Integration tests with PostgreSQL
 ├── .github/workflows/
-│   └── ci-cd.yml            # GitHub Actions workflow
+│   └── ci-cd.yml            # GitHub Actions CI/CD workflow
 ├── Dockerfile               # Multi-stage Docker image
 ├── docker-compose.yml       # Local development setup
 ├── requirements.txt         # Python dependencies
 ├── pyproject.toml           # Project configuration
 ├── .env.example             # Environment variables template
 └── README.md                # This file
+```
+
+## Docker Hub Repository
+
+The Docker image for this application is automatically built and pushed to Docker Hub via GitHub Actions on every push to the main branch.
+
+**Docker Hub Repository**: `https://hub.docker.com/r/<your-dockerhub-username>/secure-fastapi-app`
+
+To pull and run the latest image:
+```bash
+docker pull <your-dockerhub-username>/secure-fastapi-app:latest
+docker run -p 8000:8000 <your-dockerhub-username>/secure-fastapi-app:latest
 ```
 
 ## Prerequisites
@@ -107,20 +123,28 @@ A comprehensive FastAPI application implementing secure user authentication, pas
 
 ## Running Tests
 
-### Unit Tests Only
+### Unit Tests
+
+The project includes comprehensive unit tests for calculations, factory pattern, schemas, and security:
 
 ```bash
 # All unit tests
-pytest tests/test_security.py tests/test_schemas.py -v
+pytest tests/test_security.py tests/test_schemas.py tests/test_calculations.py -v
 
-# Specific test file
+# Calculation tests (factory pattern and operations)
+pytest tests/test_calculations.py -v
+
+# Schema validation tests
+pytest tests/test_schemas.py -v
+
+# Security/password hashing tests
 pytest tests/test_security.py -v
 
 # Specific test class
-pytest tests/test_schemas.py::TestUserCreateSchema -v
+pytest tests/test_calculations.py::TestCalculationFactory -v
 
 # Specific test
-pytest tests/test_security.py::TestPasswordHashing::test_hash_password_returns_string -v
+pytest tests/test_calculations.py::TestDivideOperation::test_divide_by_zero_raises_error -v
 ```
 
 ### Integration Tests
@@ -145,6 +169,65 @@ pytest --cov=app --cov-report=html --cov-report=term
 ```
 
 Coverage report will be generated in `htmlcov/index.html`
+
+### Test Summary
+
+- **test_calculations.py** (42 tests): Tests for calculation operations, factory pattern, and Pydantic schema validation
+- **test_schemas.py** (32 tests): Tests for User schema validation
+- **test_security.py** (32 tests): Tests for password hashing and verification
+- **test_integration.py** (50+ tests): Integration tests for User and Calculation models with PostgreSQL
+
+## Calculation Model & Factory Pattern
+
+### Calculation Model
+
+The application includes a calculation model for storing arithmetic operations:
+
+```python
+class Calculation(Base):
+    __tablename__ = "calculations"
+    
+    id: UUID (Primary Key)
+    a: Float - First operand
+    b: Float - Second operand
+    type: String(20) - Operation type (Add, Subtract, Multiply, Divide)
+    result: Float - Computed result
+    user_id: UUID (Foreign Key to User) - Optional
+    created_at: DateTime - Auto-populated
+```
+
+### Factory Pattern Implementation
+
+The factory pattern is used to create calculation operations dynamically:
+
+```python
+from app.factory import CalculationFactory
+
+# Create an operation
+operation = CalculationFactory.create_operation("Add")
+result = operation.calculate(10.5, 5.5)  # Returns 16.0
+
+# Convenience method
+result = CalculationFactory.calculate("Multiply", 3.0, 4.0)  # Returns 12.0
+
+# Get supported operations
+operations = CalculationFactory.get_supported_operations()
+# Returns: ["Add", "Subtract", "Multiply", "Divide"]
+```
+
+### Supported Operations
+
+- **Add**: Addition of two numbers
+- **Subtract**: Subtraction of two numbers
+- **Multiply**: Multiplication of two numbers
+- **Divide**: Division with zero divisor validation
+
+### Validation
+
+The `CalculationCreate` schema includes validation:
+- Division by zero is prevented
+- Operation type must be one of: Add, Subtract, Multiply, Divide
+- Both operands (a, b) are required
 
 ## API Endpoints
 
@@ -180,6 +263,8 @@ Coverage report will be generated in `htmlcov/index.html`
 - `POST /verify-password` - Verify user password
   - Parameters: `username`, `password`
 
+**Note**: Calculation endpoints (BREAD operations) will be implemented in Module 12. Currently, the Calculation model and factory pattern are available for direct database operations and testing.
+
 ## Authentication & Security
 
 ### Password Hashing
@@ -204,7 +289,8 @@ is_valid = verify_password("mypassword", hashed)
 - **Unique Constraints**: Username and email are enforced as unique at the database level
 - **Password Storage**: Only password hashes are stored, never plain-text passwords
 - **UUID Primary Keys**: Uses UUID instead of auto-incrementing integers
-- **Timestamps**: Automatic creation timestamps on user records
+- **Foreign Keys**: Calculation model properly references User model with optional relationship
+- **Timestamps**: Automatic creation timestamps on all records
 
 ## Database Models
 
@@ -221,6 +307,21 @@ class User(Base):
     created_at: DateTime - Auto-populated
 ```
 
+### Calculation Model
+
+```python
+class Calculation(Base):
+    __tablename__ = "calculations"
+    
+    id: UUID (Primary Key)
+    a: Float - First operand
+    b: Float - Second operand
+    type: String(20) - Operation type
+    result: Float - Calculated result
+    user_id: UUID (Foreign Key, Optional) - Links to User
+    created_at: DateTime - Auto-populated
+```
+
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
@@ -228,10 +329,11 @@ class User(Base):
 The project includes an automated CI/CD pipeline (`.github/workflows/ci-cd.yml`) that:
 
 1. **Tests on Push**: Runs on every push to `main` or `develop` branches
-2. **Unit Tests**: Tests password hashing, schema validation
-3. **Integration Tests**: Tests with real PostgreSQL database
-4. **Docker Build**: Builds Docker image on successful tests
-5. **Docker Hub Push**: Pushes image to Docker Hub (requires secrets configuration)
+2. **Unit Tests**: Tests password hashing, schema validation, calculations, and factory pattern
+3. **Integration Tests**: Tests with real PostgreSQL database for both User and Calculation models
+4. **Coverage Report**: Generates test coverage reports
+5. **Docker Build**: Builds Docker image on successful tests
+6. **Docker Hub Push**: Pushes image to Docker Hub (requires secrets configuration)
 
 ### GitHub Secrets Configuration
 

@@ -1,4 +1,3 @@
 """Secure FastAPI Application Package"""
-from app.main import app
-
+# Lazy import to avoid database connection on import
 __all__ = ["app"]

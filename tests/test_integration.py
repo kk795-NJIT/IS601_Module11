@@ -11,7 +11,8 @@ from fastapi.testclient import TestClient
 
 from app.main import app, Base
 from app.database import get_db
-from app.models import User
+from app.models import User, Calculation
+from app.factory import CalculationFactory
 
 
 # Use PostgreSQL test database
@@ -385,3 +386,219 @@ class TestUserDeletion:
         response = client.delete("/users/00000000-0000-0000-0000-000000000000")
         assert response.status_code == 404
         assert "User not found" in response.json()["detail"]
+
+
+class TestCalculationIntegration:
+    """Integration tests for Calculation model with database."""
+    
+    def test_create_calculation_in_database(self, db_session):
+        """Test creating and storing a calculation in the database."""
+        # Create a calculation using the factory
+        operation_type = "Add"
+        a, b = 10.5, 5.5
+        result = CalculationFactory.calculate(operation_type, a, b)
+        
+        # Store in database
+        calc = Calculation(
+            a=a,
+            b=b,
+            type=operation_type,
+            result=result
+        )
+        db_session.add(calc)
+        db_session.commit()
+        db_session.refresh(calc)
+        
+        # Verify data
+        assert calc.id is not None
+        assert calc.a == 10.5
+        assert calc.b == 5.5
+        assert calc.type == "Add"
+        assert calc.result == 16.0
+        assert calc.user_id is None
+        assert calc.created_at is not None
+    
+    def test_create_calculation_with_user_id(self, db_session):
+        """Test creating a calculation with associated user."""
+        # Create a user first
+        from app.security import hash_password
+        user = User(
+            username="testuser",
+            email="test@example.com",
+            password_hash=hash_password("password123")
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+        
+        # Create calculation with user_id
+        result = CalculationFactory.calculate("Multiply", 3.0, 4.0)
+        calc = Calculation(
+            a=3.0,
+            b=4.0,
+            type="Multiply",
+            result=result,
+            user_id=user.id
+        )
+        db_session.add(calc)
+        db_session.commit()
+        db_session.refresh(calc)
+        
+        # Verify
+        assert calc.user_id == user.id
+        assert calc.result == 12.0
+    
+    def test_query_calculations_by_type(self, db_session):
+        """Test querying calculations by operation type."""
+        # Create multiple calculations
+        calculations_data = [
+            ("Add", 10.0, 5.0),
+            ("Add", 20.0, 10.0),
+            ("Subtract", 15.0, 5.0),
+            ("Multiply", 3.0, 7.0)
+        ]
+        
+        for op_type, a, b in calculations_data:
+            result = CalculationFactory.calculate(op_type, a, b)
+            calc = Calculation(a=a, b=b, type=op_type, result=result)
+            db_session.add(calc)
+        
+        db_session.commit()
+        
+        # Query Add operations
+        add_calcs = db_session.query(Calculation).filter(
+            Calculation.type == "Add"
+        ).all()
+        
+        assert len(add_calcs) == 2
+        assert all(c.type == "Add" for c in add_calcs)
+    
+    def test_calculation_all_operation_types(self, db_session):
+        """Test storing all operation types in database."""
+        test_cases = [
+            ("Add", 10.0, 5.0, 15.0),
+            ("Subtract", 10.0, 5.0, 5.0),
+            ("Multiply", 10.0, 5.0, 50.0),
+            ("Divide", 10.0, 5.0, 2.0)
+        ]
+        
+        for op_type, a, b, expected_result in test_cases:
+            result = CalculationFactory.calculate(op_type, a, b)
+            assert result == expected_result
+            
+            calc = Calculation(a=a, b=b, type=op_type, result=result)
+            db_session.add(calc)
+        
+        db_session.commit()
+        
+        # Verify all stored
+        all_calcs = db_session.query(Calculation).all()
+        assert len(all_calcs) == 4
+    
+    def test_calculation_with_negative_numbers(self, db_session):
+        """Test calculations with negative numbers stored correctly."""
+        result = CalculationFactory.calculate("Add", -10.5, -5.5)
+        calc = Calculation(a=-10.5, b=-5.5, type="Add", result=result)
+        db_session.add(calc)
+        db_session.commit()
+        db_session.refresh(calc)
+        
+        assert calc.a == -10.5
+        assert calc.b == -5.5
+        assert calc.result == -16.0
+    
+    def test_calculation_with_decimals(self, db_session):
+        """Test calculations with decimal precision."""
+        result = CalculationFactory.calculate("Divide", 10.0, 3.0)
+        calc = Calculation(a=10.0, b=3.0, type="Divide", result=result)
+        db_session.add(calc)
+        db_session.commit()
+        db_session.refresh(calc)
+        
+        assert abs(calc.result - 3.3333333333333335) < 0.0001
+    
+    def test_query_calculations_by_user(self, db_session):
+        """Test querying calculations by user_id."""
+        from app.security import hash_password
+        
+        # Create two users
+        user1 = User(
+            username="user1",
+            email="user1@example.com",
+            password_hash=hash_password("password123")
+        )
+        user2 = User(
+            username="user2",
+            email="user2@example.com",
+            password_hash=hash_password("password123")
+        )
+        db_session.add_all([user1, user2])
+        db_session.commit()
+        
+        # Create calculations for user1
+        for i in range(3):
+            result = CalculationFactory.calculate("Add", float(i), 1.0)
+            calc = Calculation(
+                a=float(i),
+                b=1.0,
+                type="Add",
+                result=result,
+                user_id=user1.id
+            )
+            db_session.add(calc)
+        
+        # Create calculation for user2
+        result = CalculationFactory.calculate("Multiply", 5.0, 2.0)
+        calc = Calculation(a=5.0, b=2.0, type="Multiply", result=result, user_id=user2.id)
+        db_session.add(calc)
+        
+        db_session.commit()
+        
+        # Query user1's calculations
+        user1_calcs = db_session.query(Calculation).filter(
+            Calculation.user_id == user1.id
+        ).all()
+        
+        assert len(user1_calcs) == 3
+        assert all(c.user_id == user1.id for c in user1_calcs)
+    
+    def test_delete_calculation(self, db_session):
+        """Test deleting a calculation from database."""
+        result = CalculationFactory.calculate("Add", 10.0, 5.0)
+        calc = Calculation(a=10.0, b=5.0, type="Add", result=result)
+        db_session.add(calc)
+        db_session.commit()
+        calc_id = calc.id
+        
+        # Delete
+        db_session.delete(calc)
+        db_session.commit()
+        
+        # Verify deleted
+        deleted_calc = db_session.query(Calculation).filter(
+            Calculation.id == calc_id
+        ).first()
+        assert deleted_calc is None
+    
+    def test_calculation_ordering_by_created_at(self, db_session):
+        """Test ordering calculations by creation time."""
+        import time
+        
+        # Create calculations with slight time differences
+        for i in range(3):
+            result = CalculationFactory.calculate("Add", float(i), 1.0)
+            calc = Calculation(a=float(i), b=1.0, type="Add", result=result)
+            db_session.add(calc)
+            db_session.commit()
+            if i < 2:
+                time.sleep(0.01)  # Small delay to ensure different timestamps
+        
+        # Query ordered by created_at
+        calcs = db_session.query(Calculation).order_by(
+            Calculation.created_at
+        ).all()
+        
+        assert len(calcs) == 3
+        # Verify chronological order
+        for i in range(len(calcs) - 1):
+            assert calcs[i].created_at <= calcs[i + 1].created_at
