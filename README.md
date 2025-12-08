@@ -47,14 +47,14 @@ A comprehensive FastAPI application implementing secure user authentication, pas
 
 The Docker image for this application is automatically built and pushed to Docker Hub via GitHub Actions on every push to the main branch.
 
-**Docker Hub Repository**: `https://hub.docker.com/r/YOUR_USERNAME/secure-fastapi-app`
+**Docker Hub Repository**: `https://hub.docker.com/repository/docker/kk795/secure-fastapi-app/general`
 
-> **Note**: Replace `YOUR_USERNAME` with your Docker Hub username after creating the repository.
+> **Note**: The repository is configured for Docker Hub username `kk795`.
 
 To pull and run the latest image:
 ```bash
-docker pull YOUR_USERNAME/secure-fastapi-app:latest
-docker run -p 8000:8000 YOUR_USERNAME/secure-fastapi-app:latest
+docker pull kk795/secure-fastapi-app:latest
+docker run -p 8000:8000 kk795/secure-fastapi-app:latest
 ```
 
 ## Prerequisites
@@ -380,7 +380,7 @@ Once configured, Docker images are automatically pushed to:
 ### Pull Image from Docker Hub
 
 ```bash
-docker pull <your-docker-hub-username>/secure-fastapi-app:latest
+docker pull kk795/secure-fastapi-app:latest
 ```
 
 ### Run Container
@@ -388,15 +388,15 @@ docker pull <your-docker-hub-username>/secure-fastapi-app:latest
 ```bash
 docker run -p 8000:8000 \
   -e DATABASE_URL=postgresql://user:password@host:5432/secure_app \
-  <your-docker-hub-username>/secure-fastapi-app:latest
+  kk795/secure-fastapi-app:latest
 ```
 
 ### Docker Hub Links
 
-- Docker Hub Repository: `https://hub.docker.com/r/YOUR_USERNAME/secure-fastapi-app`
-- Pull Image: `docker pull YOUR_USERNAME/secure-fastapi-app:latest`
+- Docker Hub Repository: `https://hub.docker.com/repository/docker/kk795/secure-fastapi-app/general`
+- Pull Image: `docker pull kk795/secure-fastapi-app:latest`
 
-**Note**: Replace `YOUR_USERNAME` with your actual Docker Hub username.
+**Note**: The repository is configured for Docker Hub username `kk795`.
 
 ### Module 11 Assignment Submission
 
@@ -497,8 +497,8 @@ Examples:
 
 3. **Deploy with Docker**
    ```bash
-   docker pull <your-hub>/secure-fastapi-app:latest
-   docker run -e DATABASE_URL=... <your-hub>/secure-fastapi-app
+   docker pull kk795/secure-fastapi-app:latest
+   docker run -e DATABASE_URL=... kk795/secure-fastapi-app
    ```
 
 ### Production Best Practices
